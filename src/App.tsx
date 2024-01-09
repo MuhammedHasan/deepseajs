@@ -9,9 +9,9 @@ import { DNALogo } from 'logojs-react';
 function oneHotEncoder(dna: string) {
   const encoder: { [key: string]: number[] } = {
     A: [1, 0, 0, 0],
-    T: [0, 1, 0, 0],
+    G: [0, 1, 0, 0],
     C: [0, 0, 1, 0],
-    G: [0, 0, 0, 1],
+    T: [0, 0, 0, 1],
   }
   let data: number[] = [];
 
@@ -119,8 +119,12 @@ function App() {
             }
           </div>
           <div>
+            <span className={`mr-2 ${dna.length != 1000 ? 'text-red-600' : ''}`}>
+              {dna.length} / 1000
+            </span>
             <button
-              className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded"
+              className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={dna.length != 1000}
               onClick={() => predict()}>
               Predict
             </button>
