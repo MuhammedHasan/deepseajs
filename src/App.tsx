@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import BarChart, { BarChartProps } from './BarChart'
 import tfNames from './tfNames'
 import tfs from './tfs'
+// @ts-ignore
+import { DNALogo } from 'logojs-react';
 
 function oneHotEncoder(dna: string) {
   const encoder: { [key: string]: number[] } = {
@@ -27,51 +29,55 @@ function App() {
   const [dna, setDna] = useState(tfs[0].sequence)
   const [model, setModel] = useState<ort.InferenceSession | null>(null)
   const [probs, setProbs] = useState<BarChartProps>([])
+  const [ppm, setPpm] = useState<number[][][]>([])
 
   useEffect(() => {
+
     (async () => {
       const session = await ort.InferenceSession.create(
         '/deepsea.onnx', { executionProviders: ['wasm'] });
       setModel(session)
       setDownloading(false)
-    })()
+    })();
+
   }, [])
 
-  const predict = async (dna: string) => {
+  const predict = async () => {
     if (model === null)
       return;
     else {
       const input = oneHotEncoder(dna);
-      console.log(input)
 
       const results: any = await model.run({ arg0: input });
-      console.log(results)
+
       const probs = new Float32Array(results.sigmoid.data);
+      const gradCam = new Float32Array(results.div.data);
 
       let tfProbs: BarChartProps = [];
 
       for (let i = 0; i < probs.length; i++) {
-        tfProbs[i] = { 'name': tfNames[i], 'prob': probs[i] }
+        tfProbs[i] = { name: tfNames[i], prob: probs[i], index: i }
       }
-      console.log(tfProbs)
 
       tfProbs = tfProbs.sort((a, b) => (a.prob > b.prob) ? -1 : 1)
       setProbs(tfProbs.slice(0, 25))
+
+      let ppm: number[][][] = new Array(20).fill(null).map(() => []);
+
+      const scale = 1.5;
+
+      for (let i = 0; i < gradCam.length / 4; i++) {
+        ppm[Math.floor(i / 50)].push(
+          [
+            gradCam[i] * scale,
+            gradCam[i + 1000] * scale,
+            gradCam[i + 2000] * scale,
+            gradCam[i + 3000] * scale
+          ]
+        )
+      }
+      setPpm(ppm)
     }
-  }
-
-  const predictLogo = async (tfname: string) => {
-    console.log(tfname)
-
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    let data = [];
-
-    for (let i = 0; i < 50; i++) {
-      data.push([1., 0.31, 0.08, 0.50])
-    }
-
-    return data
   }
 
   return (
@@ -115,13 +121,22 @@ function App() {
           <div>
             <button
               className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded"
-              onClick={() => predict(dna)}>
+              onClick={() => predict()}>
               Predict
             </button>
           </div>
         </div>
         <div className='mt-10'>
-          <BarChart tfProbs={probs} predictLogo={predictLogo} />
+          <BarChart tfProbs={probs} />
+        </div>
+        <div>
+          {
+            ppm.length > 0 ? ([...Array(20).keys()]).map((i) =>
+              <div key={i}>
+                <DNALogo ppm={ppm[i]} />
+              </div>
+            ) : null
+          }
         </div>
       </div>
     </div >

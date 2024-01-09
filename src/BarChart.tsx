@@ -1,24 +1,18 @@
 import { useEffect, useState } from 'react'
 import ReactApexChart from 'react-apexcharts'
-import Modal from './Modal'
 
 type BarChartProp = {
     prob: number,
-    name: string
+    name: string,
+    index: number
 }
 type BarChartProps = Array<BarChartProp>
 
-function barOptions(tf_probs: BarChartProps, setOpen: (open: boolean) => void, calculateLogo: (tfname: string) => void) {
+function barOptions(tf_probs: BarChartProps) {
 
     return {
         chart: {
             id: 'basic-bar',
-            events: {
-                dataPointSelection: (_: any, __: any, config: any) => {
-                    setOpen(true)
-                    calculateLogo(tf_probs[config.dataPointIndex].name)
-                }
-            }
         },
         xaxis: {
             categories: Array.isArray(tf_probs) ? tf_probs.map((tf: BarChartProp) => tf.name) : [],
@@ -54,22 +48,13 @@ function barSeries(tf_probs: BarChartProps) {
     ]
 }
 
-const BarChart = ({ tfProbs, predictLogo }: { tfProbs: BarChartProps, predictLogo: (tfname: string) => Promise<number[][]> }) => {
+const BarChart = ({ tfProbs }: { tfProbs: BarChartProps }) => {
 
-    const [isOpen, setIsOpen] = useState(false)
-
-    const calculateLogo = async (tfname: string) => {
-        const ppm = await predictLogo(tfname)
-        setPpm(ppm)
-    }
-
-    const [options, setOptions] = useState(barOptions(tfProbs, setIsOpen, calculateLogo))
+    const [options, setOptions] = useState(barOptions(tfProbs))
     const [series, setSeries] = useState(barSeries(tfProbs))
 
-    const [ppm, setPpm] = useState<number[][] | null>(null)
-
     useEffect(() => {
-        setOptions(barOptions(tfProbs, setIsOpen, calculateLogo))
+        setOptions(barOptions(tfProbs))
         setSeries(barSeries(tfProbs))
     }, [tfProbs])
 
@@ -81,7 +66,6 @@ const BarChart = ({ tfProbs, predictLogo }: { tfProbs: BarChartProps, predictLog
                 type='bar'
                 height={750}
             />
-            <Modal ppm={ppm || []} isOpen={isOpen} setIsOpen={setIsOpen} />
         </div>
     )
 }
