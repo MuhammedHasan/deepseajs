@@ -27,8 +27,7 @@ function barOptions(tf_probs: BarChartProps) {
                 maxWidth: 300,
                 style: {
                     fontSize: "20px"
-                },
-                align: 'left'
+                }
             }
         },
         plotOptions: {
