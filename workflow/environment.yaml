@@ -1,0 +1,20 @@
+name: deepsea
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - python
+  - pip
+  - jupyter
+  - notebook
+  - pytorch
+
+  - pip:
+      - snakemake
+      - tqdm
+      - pandas
+      - scipy
+      - pytorch_lightning
+      - onnxruntime

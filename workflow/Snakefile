@@ -1,0 +1,63 @@
+configfile: "workflow/config.yaml"
+
+rule all:
+    input:
+        config["deepsea"]["model"]["weights"],
+        config["deepsea"]["model"]["onnx"],
+        "figures/test_deepsea.png",
+
+rule download_deepsea_dataset:
+    params:
+        url="http://deepsea.princeton.edu/media/code/deepsea_train_bundle.v0.9.tar.gz",
+    output:
+        train=config["deepsea"]["data"]["train"],
+        val=config["deepsea"]["data"]["val"],
+        test=config["deepsea"]["data"]["test"],
+    run:
+        output_dir = Path(output.train).parent.parent
+        shell("wget -O {output_dir}/deepsea.tar.gz {params.url}")
+        shell("tar -xzvf {output_dir}/deepsea.tar.gz -C {output_dir}")
+
+rule train_deepsea:
+    input:
+        train=config["deepsea"]["data"]["train"],
+        val=config["deepsea"]["data"]["val"],
+        test=config["deepsea"]["data"]["test"],
+    threads: 16
+    params:
+        devices=[0],
+        batch_size=512 * 16,
+        epochs=30,
+        early_stopping=5,
+    output:
+        model=config["deepsea"]["model"]["weights"],
+        checkpoint=directory(config["deepsea"]["model"]["checkpoint_dir"]),
+    script:
+        "./train_deepsea.py"
+
+
+rule deepsea_onnx:
+    input:
+        model=config["deepsea"]["model"]["weights"],
+        test=config["deepsea"]["data"]["test"],
+    threads: 16
+    output:
+        onnx=config["deepsea"]["model"]["onnx"],
+    script:
+        "./deepsea_onnx.py"
+
+
+rule test_deepsea:
+    input:
+        model=config["deepsea"]["model"]["weights"],
+        train=config["deepsea"]["data"]["train"],
+        val=config["deepsea"]["data"]["val"],
+        test=config["deepsea"]["data"]["test"],
+    threads: 16
+    params:
+        devices=[0],
+        batch_size=512,
+    output:
+        fig="figures/test_deepsea.png",
+    notebook:
+        "./test_deepsea.py.ipynb"

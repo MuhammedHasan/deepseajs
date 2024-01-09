@@ -1,0 +1,10 @@
+deepsea:
+  data:
+    train: data/resources/deepsea/deepsea_train/train.mat
+    val: data/resources/deepsea/deepsea_train/valid.mat
+    test: data/resources/deepsea/deepsea_train/test.mat
+
+  model:
+    weights: data/results/deepsea/model/deepsea_weights.pt
+    checkpoint_dir: data/results/deepsea/checkpoints/
+    onnx: data/results/deepsea/deepsea.onnx
